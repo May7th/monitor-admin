@@ -1,0 +1,156 @@
+<div class="layui-card">
+    <div class="layui-card-header">
+        <h2 class="header-title">监控列表</h2>
+        <span class="layui-breadcrumb pull-right">
+          <a href="#!home_console">首页</a>
+          <a><cite>监控列表</cite></a>
+        </span>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-form toolbar">
+            搜索：
+            <select id="plan-search-key">
+                <option value="">-请选择-</option>
+                <option value="plan_id">系统名称</option>
+                <option value="planname">监控名</option>
+                <option value="nick_name">接口方法</option>
+            </select>&emsp;
+            <input id="plan-search-value" class="layui-input search-input" type="text" placeholder="输入关键字"/>&emsp;
+            <button id="plan-btn-search" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+            <button id="plan-btn-add" class="layui-btn icon-btn"><i
+                    class="layui-icon">&#xe654;</i>添加
+            </button>
+        </div>
+
+        <table class="layui-table" id="plan-table" lay-filter="plan-table"></table>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="plan-table-bar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+<!--    <a class="layui-btn layui-btn-xs" lay-event="reset">重置密码</a>-->
+</script>
+
+<!-- 表格状态列 -->
+<script type="text/html" id="plan-tpl-state">
+    <input type="checkbox" lay-filter="plan-tpl-state" value="{{d.groupId}}" lay-skin="switch" lay-text="正常|锁定"
+           {{d.enable==0?'':'checked'}}/>
+</script>
+<script>
+    layui.use(['form', 'table','layer', 'util', 'admin', 'element'], function () {
+            var form = layui.form;
+            var table = layui.table;
+            var layer = layui.layer;
+            var util = layui.util;
+            var admin = layui.admin;
+            var element = layui.element;
+            
+            form.render('select');
+
+         // 渲染表格
+            table.render({
+                elem: '#plan-table',
+                url: '/monitor/groupPlan/list',
+                page: true,
+                cols: [
+                	[
+                    {type: 'numbers'},
+                    {field: 'systemName', sort: true, title: '系统名称'},
+                    {field: 'name', sort: true, title: '监控名称'},
+                    {field: 'frequency', sort: true, title: '运行时间'},
+                    {field: 'httpMethod', sort: true, title: '接口方法'},
+                    {field: 'url', sort: true, title: '接口地址'},
+                    {
+                        sort: true, templet: function (d) {
+                            return util.toDateString(d.createTime);
+                        }, title: '创建时间'
+                    },
+                    {field: 'enable', sort: true, templet: '#plan-tpl-state', title: '运行状态'},
+                    {align: 'center', toolbar: '#plan-table-bar', title: '操作'}
+                ]
+                	]
+            });
+         
+            // 添加按钮点击事件
+            $('#plan-btn-add').click(function () {
+                showEditModel();
+            });
+            
+            
+            // 工具条点击事件
+            table.on('tool(plan-table)', function (obj) {
+            	console.log(obj);
+                var data = obj.data;
+                var layEvent = obj.event;
+
+                if (layEvent === 'edit') { // 修改
+                    showEditModel(data);
+                } else if (layEvent === 'reset') { // 重置密码
+                    layer.confirm('确定重置此用户的密码吗？', function (i) {
+                        layer.close(i);
+                        layer.load(2);
+                        admin.go('/system/plan/restPsw', {
+                            planId: obj.data.planId
+                        }, function (data) {
+                        	console.log(data.code);
+                            layer.closeAll('loading');
+                            if (data.code == 200) {
+                                layer.msg(data.msg, {icon: 1});
+                            }else if(data.code == 401){
+                            	layer.msg(data.msg, {icon: 2, time: 1500}, function () {location.replace('/login'); }, 1000);
+                            	 return;
+                            }
+                            else {
+                                layer.msg(data.msg, {icon: 2});
+                            }
+                        });
+                    });
+                }
+            });
+            
+            // 显示表单弹窗
+            var showEditModel = function (data) {
+                var title = data ? '修改监控对象' : '添加监控对象';
+                admin.putTempData('t_plan', data);
+                admin.popupCenter({
+                    area:'900px',
+                    title: title,
+                    path: '/monitor/groupPlan/planForm',
+                    finish: function () {
+                        table.reload('plan-table', {});
+                    }
+                });
+            };
+
+            // 搜索按钮点击事件
+            $('#plan-btn-search').click(function () {
+                var key = $('#plan-search-key').val();
+                var value = $('#plan-search-value').val();
+                table.reload('plan-table', {where: {searchKey: key, searchValue: value}});
+            });
+
+            // 修改plan状态
+            form.on('switch(plan-tpl-state)', function (obj) {
+                layer.load(2);
+                admin.go('/monitor/groupPlan/updateState', {
+                    groupId: obj.elem.value,
+                    state: obj.elem.checked ? 0 : 1
+                }, function (data) {
+                    layer.closeAll('loading');
+                    if (data.code == 200) {
+                        layer.msg(data.msg, {icon: 1});
+                        //table.reload('table-plan', {});
+                    }else if(data.code == 401){
+                    	layer.msg(data.msg, {icon: 2, time: 1500}, function () {location.replace('/login'); }, 1000);
+                   	 return;
+                   } else {
+                        layer.msg(data.msg, {icon: 2});
+                        $(obj.elem).prop('checked', !obj.elem.checked);
+                        form.render('checkbox');
+                    }
+                });
+            });
+         
+            });
+    </script> 

@@ -1,0 +1,15 @@
+<script type="text/javascript" th:src="@{/static/assets/libs/jquery-3.2.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/static/assets/libs/q.js}"></script>
+<script type="text/javascript" th:src="@{/static/assets/libs/layui/layui.js}"></script>
+<script type="text/javascript" th:src="@{/static/assets/libs/zTree/js/jquery.ztree.all-3.5.min.js}"></script>
+<script>
+    layui.config({
+        base: '/static/module/'
+    }).extend({
+        formSelects: 'formSelects/formSelects-v4',
+        treetable: 'treetable-lay/treetable'
+    }).use(['admin'], function () {
+        var admin = layui.admin;
+
+    });
+</script>

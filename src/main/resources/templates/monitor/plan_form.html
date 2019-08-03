@@ -1,0 +1,123 @@
+<!--        <div class="layui-carousel" id="stepForm" lay-filter="stepForm" style="margin: 0 auto;">-->
+            <form id="plan-form" lay-filter="plan-form" class="layui-form layui-form-pane" style="margin: 30px">
+                <input name="requestId" type="hidden"/>
+                <input name="groupId" type="hidden"/>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">所属系统</label>
+                    <div class="layui-input-block">
+                        <input name="systemName" placeholder="请输入系统名称" type="text" class="layui-input" maxlength="20"
+                               lay-verify="required" required/>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">监控名称</label>
+                    <div class="layui-input-block">
+                        <input name="name" placeholder="请输入监控" type="text" class="layui-input" maxlength="20"
+                               lay-verify="required" required/>
+                    </div>
+                </div>
+                <div class="layui-form-item" pane>
+                    <label class="layui-form-label">接口类型</label>
+                    <div class="layui-input-block">
+                            <input type="radio" name="httpMethod" value="GET" title="GET">
+                            <input type="radio" name="httpMethod" value="POST" title="POST" checked>
+                            <input type="radio" name="httpMethod" value="HEAD" title="HEAD">
+                            <input type="radio" name="httpMethod" value="PUT" title="PUT">
+                            <input type="radio" name="httpMethod" value="DELETE" title="DELETE">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">接口地址</label>
+                    <div class="layui-input-block">
+                        <input name="url" placeholder="请输入接口地址,请以http://开头" type="text" class="layui-input" maxlength="100"
+                               lay-verify="url" required/>
+                    </div>
+                </div>
+                <div class="layui-form-item" pane>
+                    <label class="layui-form-label">监控频率</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="frequency" value="THIRTY" title="30秒">
+                        <input type="radio" name="frequency" value="SIXTY" title="1分钟" checked>
+                        <input type="radio" name="frequency" value="FIVE_MINUTES" title="5分钟">
+                        <input type="radio" name="frequency" value="TEN_MINUTES" title="10分钟">
+                        <input type="radio" name="frequency" value="THIRTY_MINUTES" title="30分钟">
+                        <input type="radio" name="frequency" value="ONE_HOUR" title="1小时">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">结果校验</label>
+                        <div class="layui-input-block">
+                            <select name="conditionType" lay-verify="">
+                                <option value="DEFAULT">请选择校验方式</option>
+                                <option value="STATUSCODE">响应码</option>
+                                <option value="CONTAINS">内容包括</option>
+                                <option value="DOESNT_CONTAIN">内容不包括</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="layui-inline">
+                        <input name="conditions" type="text" class="layui-input" maxlength="20"/>
+                    </div>
+
+                </div>
+            <!--    <div class="layui-form-item">-->
+            <!--        <label class="layui-form-label">评标地点</label>-->
+            <!--        <div class="layui-input-block">-->
+            <!--            <input name="location" placeholder="请输入评标地点" type="text" class="layui-input" maxlength="20"-->
+            <!--                   lay-verify="required" required/>-->
+            <!--        </div>-->
+            <!--    </div>-->
+                <div class="layui-form-item">
+                    <label class="layui-form-label">备注</label>
+                    <div class="layui-input-block">
+                        <input name="remark" placeholder="请输入备注" type="text" class="layui-input"/>
+                    </div>
+                </div>
+
+
+                <div class="layui-form-item model-form-footer" style="padding: 30px">
+                    <button class="layui-btn layui-btn-primary" type="button" ew-event="closeDialog">取消</button>
+                    <button class="layui-btn" lay-filter="plan-form-submit" lay-submit>保存</button>
+                </div>
+            </form>
+<!--        </div>-->
+
+<script>
+    layui.use(['layer', 'admin', 'form', 'formSelects'], function () {
+        var layer = layui.layer;
+        var admin = layui.admin;
+        var form = layui.form;
+        var formSelects = layui.formSelects;
+
+        form.render('radio');
+        form.render('select');
+        var url = '/monitor/groupPlan/add';
+        var plan = admin.getTempData('t_plan');
+        console.log(plan)
+        if (plan) {
+            url = '/monitor/groupPlan/update';
+            form.val('plan-form', plan);
+        }
+
+        // 表单提交事件
+        form.on('submit(plan-form-submit)', function (data) {
+            layer.load(2);
+            admin.go(url, data.field, function (data) {
+                layer.closeAll('loading');
+                if (data.code == 200) {
+                    layer.msg(data.msg, {icon: 1});
+                    admin.finishPopupCenter();
+                }else if(data.code == 401){
+                    layer.msg(data.msg, {icon: 2, time: 1500}, function () {location.replace('/login'); }, 1000);
+                    return;
+                } else {
+                    console.log('err:'+data.code);
+                    layer.msg(data.msg, {icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+</script>

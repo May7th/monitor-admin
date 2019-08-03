@@ -1,0 +1,145 @@
+<div class="layui-card">
+    <div class="layui-card-header">
+        <h2 class="header-title">测试列表</h2>
+        <span class="layui-breadcrumb pull-right">
+          <a href="#!home_console">首页</a>
+          <a><cite>测试列表</cite></a>
+        </span>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-form toolbar">
+            
+              <select id="test-search-key">
+                <option value="">-请选择-</option>
+                <option value="id">ID</option>
+                <option value="title">标题</option>
+                <option value="content">内容</option>              
+            </select>&emsp;
+            <input id="test-search-value" class="layui-input search-input" type="text" placeholder="输入关键字"/>&emsp;
+            日期：
+            <input id="test-edt-date" class="layui-input search-input date-icon" type="text" placeholder="请选择日期范围"
+                   style="width: 195px;"/>&emsp;
+            <button id="test-btn-search" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+            <button id="test-btn-add" class="layui-btn icon-btn" ><i
+                    class="layui-icon">&#xe654;</i>添加
+            </button>
+            
+            
+        </div>
+
+        <table class="layui-table" id="test-table" lay-filter="test-table"></table>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="test-table-bar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    layui.use(['laydate', 'form', 'layer','table', 'util', 'admin', 'element'], function () {
+    	  var laydate = layui.laydate;
+          var form = layui.form;
+          var table = layui.table;
+          var layer = layui.layer;
+          var util = layui.util;
+          var admin = layui.admin;
+          var element = layui.element;
+          
+          form.render('select');
+        // 渲染表格
+        table.render({
+            elem: '#test-table',
+            url: '/test/list',
+            page: true,
+            cols: [
+            	[
+                {type: 'numbers'},
+                {field: 'title', title: '标题'},
+                {field: 'content', title: '内容'},
+             
+                {
+                    field: 'createDate', templet: function (d) {
+                        return util.toDateString(d.createDate);
+                    }, title: '创建时间'
+                },
+                {align: 'center', toolbar: '#test-table-bar', title: '操作'}
+            ]
+            	]
+        });
+        
+        
+        // 搜索按钮点击事件
+        $('#test-btn-search').click(function () {
+        	var searchDate = $('#test-edt-date').val().split(' - ');
+            var key = $('#test-search-key').val();
+            var value = $('#test-search-value').val();
+            table.reload('test-table', {where: {
+            	searchKey: key, 
+            	searchValue: value,
+            	startDate: searchDate[0],
+                endDate: searchDate[1]
+            	}
+            });
+        });
+        
+        
+        // 时间范围
+        laydate.render({
+            elem: '#test-edt-date',
+            type: 'date',
+            range: true,
+            theme: 'molv'
+        });
+        
+        // 添加按钮点击事件
+        $('#test-btn-add').click(function () {
+            showEditModel();
+        });
+        
+        // 工具条点击事件
+        table.on('tool(test-table)', function (obj) {
+            console.log(obj);
+            var data = obj.data;
+            var layEvent = obj.event;
+
+            if (layEvent === 'edit') { // 修改
+                showEditModel(data);
+            } else if (layEvent === 'del') { // 重置密码
+                layer.confirm('确定要删除吗？', function (i) {
+                    layer.close(i);
+                    layer.load(2);
+                    admin.go('/test/delete', {
+                        id: obj.data.id
+                    }, function (data) {
+                        layer.closeAll('loading');
+                        if (data.code == 200) {
+                            layer.msg(data.msg, {icon: 1});
+                            table.reload('test-table', {});
+                        }else if(data.code == 401){
+                        	layer.msg(data.msg, {icon: 2, time: 1500}, function () {location.replace('/login'); }, 1000);
+                         	 return;
+                         } else {
+                            layer.msg(data.msg, {icon: 2});
+                        }
+                    });
+                });
+            }
+        });
+        
+        // 显示表单弹窗
+        var showEditModel = function (data) {
+            var title = data ? '修改test' : '添加test';
+            admin.putTempData('t_test', data);
+            admin.popupCenter({
+                title: title,
+                path: '/test/editForm',
+                finish: function () {
+                    table.reload('test-table', {});
+                }
+            });
+        };
+      
+    });
+</script>
